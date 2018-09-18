@@ -1,0 +1,59 @@
+##---
+# Source: anchore-engine/templates/worker_configmap.yaml
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: "anchore-engine-anchore-engine-worker"
+  labels:
+    app: "anchore-engine-anchore-engine"
+    chart: "anchore-engine-0.2.1"
+    release: "anchore-engine"
+    heritage: "Tiller"
+    component: worker
+data:
+  config.yaml: |
+    # Anchore Service Configuration File
+
+    service_dir: /anchore_service_config
+    tmp_dir: /tmp
+
+    allow_awsecr_iam_auto: false
+    cleanup_images: true
+
+    log_level: INFO
+    host_id: ${ANCHORE_POD_NAME}
+    internal_ssl_verify: false
+    metrics:
+      enabled: false
+    credentials:
+      users:
+         admin:
+           password: ${ANCHORE_ADMIN_PASSWORD}
+           email: 'admin@myemail.com'
+           external_service_auths:
+           #  anchoreio:
+           #    anchorecli:
+           #      auth: 'myanchoreiouser:myanchoreiopass'
+           #auto_policy_sync: true
+
+      database:
+        
+        db_connect: 'postgresql+pg8000://${ANCHORE_DB_USER}:${ANCHORE_DB_PASSWORD}@anchore-engine-postgresql:5432/anchore'
+        
+        db_connect_args:
+          timeout: 120
+          ssl: false
+        db_pool_size: 30
+        db_pool_max_overflow: 30
+    services:
+      analyzer:
+        enabled: true
+        endpoint_hostname: ${ANCHORE_POD_IP}
+        listen: '0.0.0.0'
+        port: 8084
+        cycle_timer_seconds: 1
+        max_threads: 1
+        analyzer_driver: nodocker
+        ssl_cert: /certs/tls.crt
+        ssl_key: /certs/tls.key
+        ssl_enable: false
